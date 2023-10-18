@@ -1,7 +1,7 @@
 ---
 # tasks file for nginx-role
 - block:
-  - name: add repo nginx
+  - name: add repo nginx in RedHat
     ansible.builtin.copy:
       dest: /etc/yum.repos.d/nginx.repo
       mode: '0755'
@@ -11,16 +11,28 @@
         baseurl=https://nginx.org/packages/centos/$releasever/$basearch/
         gpgcheck=0
         enabled=1
+  - name: Replace CentOS repo
+    ansible.builtin.shell: /usr/bin/sed -i 's/mirrorlist=http/#mirrorlist=http/g' /etc/yum.repos.d/CentOS-* && /usr/bin/sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+    when: ansible_distribution_major_version == "8"
   - name: install nginx
     ansible.builtin.yum:
       name: nginx
       state: latest
       update_cache: yes
     when: not ansible_check_mode
-  - name: Configure nginx from template
-    ansible.builtin.template:
-      src: nginx.conf.j2
-      dest: "{{ nginx_config_dir }}/conf.d/default.conf"
+  become: true
+  when: ansible_os_family == "RedHat"
+- name: install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: latest
+    update_cache: yes
+  when: not ansible_check_mode and ansible_os_family == "Debian"
+  become: true
+- name: Configure nginx from template
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_config_dir }}/conf.d/default.conf"
   become: true
   notify: restarted nginx service
 - name: Flush handlers
