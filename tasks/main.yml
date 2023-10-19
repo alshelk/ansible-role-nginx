@@ -11,9 +11,16 @@
         baseurl=https://nginx.org/packages/centos/$releasever/$basearch/
         gpgcheck=0
         enabled=1
-  - name: Replace CentOS repo
-    ansible.builtin.shell: /usr/bin/sed -i 's/mirrorlist=http/#mirrorlist=http/g' /etc/yum.repos.d/CentOS-* && /usr/bin/sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+  - name: check repo CentOS
+    ansible.builtin.shell: grep "#baseurl=http://mirror.centos.org" /etc/yum.repos.d/CentOS-* | wc -m
+    changed_when: false
+    register: checkRepoChange
     when: ansible_distribution_major_version == "8"
+  - name: Replace CentOS repo
+    ansible.builtin.shell: |
+      /usr/bin/sed -i 's/mirrorlist=http/#mirrorlist=http/g' /etc/yum.repos.d/CentOS-* 
+      /usr/bin/sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+    when: ansible_distribution_major_version == "8" and checkRepoChange.stdout != "0"
   - name: install nginx
     ansible.builtin.yum:
       name: nginx
