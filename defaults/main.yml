@@ -1,2 +1,3 @@
 ---
 # defaults file for nginx-role
+nginx_config: "nginx.conf.j2"

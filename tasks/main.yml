@@ -38,7 +38,7 @@
   become: true
 - name: Configure nginx from template
   ansible.builtin.template:
-    src: nginx.conf.j2
+    src: "{{ nginx_config }}"
     dest: "{{ nginx_config_dir }}/conf.d/default.conf"
   become: true
   notify: restarted nginx service
