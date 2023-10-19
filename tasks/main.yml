@@ -1,5 +1,8 @@
 ---
 # tasks file for nginx-role
+- name: Setting host facts
+  ansible.builtin.set_fact:
+    add_cfg: "{{ ngx_repl_config }}"
 - block:
   - name: add repo nginx in RedHat
     ansible.builtin.copy:
@@ -38,8 +41,9 @@
   become: true
 - name: Configure nginx from template
   ansible.builtin.template:
-    src: "{{ nginx_config }}"
+    src: nginx.conf.j2
     dest: "{{ nginx_config_dir }}/conf.d/default.conf"
+  when: add_cfg == "true"
   become: true
   notify: restarted nginx service
 - name: Flush handlers
